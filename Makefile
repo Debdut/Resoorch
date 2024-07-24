@@ -51,7 +51,7 @@ build: fmt vet tidy lint  ## Build manager binary.
 	go build -o bin/app main.go
 
 run: fmt vet  ## Run a controller from your host.
-	go run main.go
+	gow -e=go,mod,html,js run main.go
 
 clean:  ## delete the bin folder containing binaries
 	rm -rf $(PROJECT_DIR)/bin
