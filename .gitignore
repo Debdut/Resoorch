@@ -2,3 +2,4 @@ bin
 .vscode
 main
 tmp
+*.py
