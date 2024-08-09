@@ -3,3 +3,4 @@ bin
 main
 tmp
 *.py
+.env
