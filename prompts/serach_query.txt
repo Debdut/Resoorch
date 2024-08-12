@@ -1,0 +1,4 @@
+I'm writing a research report on {topic} and need help coming up with diverse search queries.
+Please generate a list of {n} search queries that would be useful for writing a research report on {topic}. These queries can be in various formats, from simple keywords to more complex phrases. Do not add any formatting or numbering to the queries.
+
+The user will ask you to help generate some search queries. Respond with only the suggested queries in plain text with no extra formatting, each on its own line.

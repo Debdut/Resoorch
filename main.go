@@ -1,103 +1,70 @@
 package main
 
 import (
-	// "embed"
+	"strings"
 
-	"fmt"
-	"log"
-
-	"github.com/joho/godotenv"
-
-	"github.com/debdut/Resoorch/lib/api/gpt"
+	"github.com/neurosnap/sentences"
 )
 
-// // go:embed all:app
-// var nextFS embed.FS
+// ExtractRelevantParts finds the most relevant sentences in the text
+func GetSentences(text string) []string {
+	// Tokenize sentences
+	storage := sentences.NewStorage()
+	tokenizer := sentences.NewSentenceTokenizer(storage)
+	tokenizedSentences := tokenizer.Tokenize(text)
 
-// func exaSearchExample(e *exa.Exa) {
-// 	query := "hottest AI startups"
-// 	response, err := e.Search(query, 2)
-// 	if err != nil {
-// 		fmt.Printf("Error: %v\n", err)
-// 		return
-// 	}
-
-// 	fmt.Printf("Search results for query '%s':\n", query)
-// 	fmt.Printf("Autoprompt: %s\n", response.AutopromptString)
-// 	fmt.Printf("Resolved Search Type: %s\n", response.ResolvedSearchType)
-// 	fmt.Printf("Request ID: %s\n\n", response.RequestID)
-
-// 	for i, result := range response.Results {
-// 		fmt.Printf("Result %d:\n", i+1)
-// 		fmt.Printf("  Title: %s\n", result.Title)
-// 		fmt.Printf("  URL: %s\n", result.URL)
-// 		fmt.Printf("  Score: %.4f\n", result.Score)
-// 		fmt.Printf("  Published Date: %s\n", result.PublishedDate)
-// 		fmt.Printf("  Author: %s\n", result.Author)
-// 		fmt.Printf("  Text: %s\n\n", result.Text)
-// 	}
-// }
-
-func gptQueryExample(g *gpt.GPT) {
-	responseFormat := gpt.ResponseFormat{
-		Type: "json_schema",
-		JSONSchema: gpt.JSONSchema{
-			Name:   "math_response",
-			Strict: true,
-			Schema: gpt.Schema{
-				Type: "object",
-				Properties: map[string]gpt.Property{
-					"steps": {
-						Type: "array",
-						Items: map[string]interface{}{
-							"type": "object",
-							"properties": map[string]gpt.Property{
-								"explanation": {Type: "string"},
-								"output":      {Type: "string"},
-							},
-							"required":             []string{"explanation", "output"},
-							"additionalProperties": false,
-						},
-					},
-					"final_answer": {Type: "string"},
-				},
-				Required:             []string{"steps", "final_answer"},
-				AdditionalProperties: false,
-			},
-		},
+	var sentences []string
+	for _, sentence := range tokenizedSentences {
+		sentences = append(sentences, sentence.Text)
 	}
-	messages := []gpt.Message{
-		{Role: "system", Content: "You are a helpful math tutor."},
-		{Role: "user", Content: "solve 8x + 31 = 2"},
-	}
-	response, err := g.Call(&messages, &responseFormat)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		if response != nil {
-			fmt.Printf(response.Error.Message)
+
+	return sentences
+}
+
+// ChunkText breaks the text into chunks of maxChunkSize
+func ChunkText(text string, maxChunkSize int) []string {
+	// Split text into paragraphs
+	paragraphs := strings.Split(text, "\n")
+
+	var chunks []string
+	for _, paragraph := range paragraphs {
+		sentences := GetSentences(paragraph)
+		var currentChunk []string
+		currentChunkSize := 0
+
+		for _, sentence := range sentences {
+			sentenceSize := len(strings.Fields(sentence))
+			if currentChunkSize+sentenceSize <= maxChunkSize {
+				currentChunk = append(currentChunk, sentence)
+				currentChunkSize += sentenceSize
+			} else {
+				chunks = append(chunks, strings.Join(currentChunk, " "))
+				currentChunk = []string{sentence}
+				currentChunkSize = sentenceSize
+			}
 		}
-		return
+
+		if len(currentChunk) > 0 {
+			chunk := strings.TrimSpace(strings.Join(currentChunk, " "))
+			if chunk != "" {
+				chunks = append(chunks, chunk)
+			}
+		}
 	}
-	fmt.Printf("Response: %s\n", response.Choices[0].Message.Content)
+
+	return chunks
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	text := `Well fuck that bitch.
+	 Python is a high-level, interpreted programming language known for its simplicity and readability. 
+	It was created by Guido van Rossum and first released in 1991. Python supports multiple programming paradigms, including procedural, object-oriented, and functional programming. It has a large and comprehensive standard library, often described as having "batteries included". Python is widely used in various fields such as web development, data analysis, artificial intelligence, and scientific computing.
+	
+	Its syntax allows programmers to express concepts in fewer lines of code than would be possible in languages such as C++ or Java. Python's design philosophy emphasizes 
+	code readability with its notable use of significant whitespace.`
 
-	// e, err := exa.InitExa(0)
-	// if err != nil {
-	// 	fmt.Printf("Error: %v\n", err)
-	// 	return
-	// }
-	// exaSearchExample(e)
-
-	g, err := gpt.InitGPT(0)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
+	chunks := ChunkText(text, 512)
+	for i, chunk := range chunks {
+		println(i, "[[", chunk, "]]")
 	}
-	gptQueryExample(g)
 }

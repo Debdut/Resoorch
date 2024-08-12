@@ -14,38 +14,45 @@ type GPT struct {
 
 // structs for request
 type Request struct {
-	Model          string         `json:"model"`
-	Messages       []Message      `json:"messages"`
-	ResponseFormat ResponseFormat `json:"response_format"`
+	Model          string          `json:"model"`
+	Messages       []Message       `json:"messages"`
+	ResponseFormat *ResponseFormat `json:"response_format,omitempty"`
+	MaxTokens      int             `json:"max_tokens,omitempty"`
+	Temperature    float64         `json:"temperature,omitempty"`
+	TopP           float64         `json:"top_p,omitempty"`
+	N              int             `json:"n,omitempty"`
 }
 
 type Message struct {
-	Role    string  `json:"role"`
-	Content string  `json:"content"`
-	Refusal *string `json:"refusal"`
+	Role    string  `json:"role,omitempty"`
+	Content string  `json:"content,omitempty"`
+	Refusal *string `json:"refusal,omitempty"`
 }
 
 type ResponseFormat struct {
-	Type       string     `json:"type"`
-	JSONSchema JSONSchema `json:"json_schema"`
+	Type       string      `json:"type,omitempty"`
+	JSONSchema *JSONSchema `json:"json_schema,,omitempty"`
 }
 
 type JSONSchema struct {
-	Name   string `json:"name"`
-	Strict bool   `json:"strict"`
-	Schema Schema `json:"schema"`
+	Name   string  `json:"name,omitempty"`
+	Strict bool    `json:"strict,omitempty"`
+	Schema *Schema `json:"schema,omitempty"`
 }
 
 type Schema struct {
-	Type                 string              `json:"type"`
-	Properties           map[string]Property `json:"properties"`
-	Required             []string            `json:"required"`
-	AdditionalProperties bool                `json:"additionalProperties"`
+	Type                 string              `json:"type,omitempty"`
+	Properties           map[string]Property `json:"properties,omitempty"`
+	Required             []string            `json:"required,omitempty"`
+	AdditionalProperties bool                `json:"additionalProperties,omitempty"`
 }
 
 type Property struct {
-	Type  string      `json:"type"`
-	Items interface{} `json:"items,omitempty"`
+	Type                 string              `json:"type,omitempty"`
+	Items                *Property           `json:"items,omitempty"`
+	Properties           map[string]Property `json:"properties,omitempty"`
+	AdditionalProperties bool                `json:"additionalProperties"`
+	Required             []string            `json:"required,omitempty"`
 }
 
 // Struct for response
@@ -117,9 +124,11 @@ func (gpt *GPT) request(request *Request) (*Response, error) {
 
 func (gpt *GPT) Call(messages *[]Message, responseFormat *ResponseFormat) (*Response, error) {
 	request := Request{
-		Model:          Model,
-		Messages:       *messages,
-		ResponseFormat: *responseFormat,
+		Model:    Model,
+		Messages: *messages,
+	}
+	if responseFormat != nil {
+		request.ResponseFormat = responseFormat
 	}
 	return gpt.request(&request)
 }
